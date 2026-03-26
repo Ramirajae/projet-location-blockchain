@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏠 Location Blockchain</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; }
+        header { background: linear-gradient(135deg, #1e3a5f, #2d6a4f); padding: 20px; text-align: center; }
+        h1 { font-size: 2rem; margin-bottom: 5px; }
+        .subtitle { color: #94a3b8; font-size: 0.9rem; }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 20px; border: 1px solid #334155; }
+        h2 { color: #60a5fa; margin-bottom: 16px; font-size: 1.2rem; }
+        input, textarea { width: 100%; padding: 10px 14px; background: #0f172a; border: 1px solid #475569; 
+                         border-radius: 8px; color: #e2e8f0; margin-bottom: 12px; font-size: 0.9rem; }
+        label { display: block; color: #94a3b8; font-size: 0.8rem; margin-bottom: 4px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; 
+               font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-danger  { background: #ef4444; color: white; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .status { padding: 8px 16px; border-radius: 20px; display: inline-block; font-size: 0.8rem; font-weight: 600; }
+        .status-active   { background: #065f46; color: #6ee7b7; }
+        .status-pending  { background: #78350f; color: #fcd34d; }
+        .status-terminated { background: #7f1d1d; color: #fca5a5; }
+        #log { background: #0f172a; padding: 14px; border-radius: 8px; font-family: monospace; 
+               font-size: 0.8rem; max-height: 200px; overflow-y: auto; }
+        .log-entry { padding: 3px 0; border-bottom: 1px solid #1e293b; }
+        .log-success { color: #6ee7b7; }
+        .log-error   { color: #fca5a5; }
+        .log-info    { color: #93c5fd; }
+        .wallet-info { background: #0f172a; padding: 10px 16px; border-radius: 8px; 
+                      font-size: 0.85rem; margin-bottom: 20px; }
+        #connectBtn { background: #7c3aed; color: white; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>🏠 Contrat de Location Blockchain</h1>
+    <p class="subtitle">Smart Contract sur Ethereum — Gestion automatisée des loyers</p>
+</header>
+
+<div class="container">
+    <button class="btn" id="connectBtn" onclick="connectWallet()">🦊 Connecter MetaMask</button>
+    <div class="wallet-info" id="walletInfo">Non connecté</div>
+
+    <!-- CRÉER UN CONTRAT -->
+    <div class="card">
+        <h2>📝 Créer un Contrat de Location</h2>
+        <label>Adresse du locataire</label>
+        <input id="tenantAddr" placeholder="0x..." />
+        <div class="grid-2">
+            <div>
+                <label>Loyer mensuel (ETH)</label>
+                <input id="rent" type="number" step="0.001" placeholder="1.0" />
+            </div>
+            <div>
+                <label>Mois de caution</label>
+                <input id="depositMonths" type="number" placeholder="2" />
+            </div>
+            <div>
+                <label>Durée (mois)</label>
+                <input id="duration" type="number" placeholder="12" />
+            </div>
+            <div>
+                <label>Pénalité/jour (%)</label>
+                <input id="penalty" type="number" placeholder="1" />
+            </div>
+        </div>
+        <label>Description du bien</label>
+        <input id="description" placeholder="Appartement T3, Paris..." />
+        <button class="btn btn-primary" onclick="createLease()">✅ Créer le Contrat</button>
+    </div>
+
+    <!-- ACTIONS SUR UN CONTRAT -->
+    <div class="card">
+        <h2>⚡ Actions sur un Contrat</h2>
+        <label>ID du Contrat</label>
+        <input id="leaseId" type="number" placeholder="0" />
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+            <button class="btn btn-success" onclick="payDeposit()">💰 Payer Caution</button>
+            <button class="btn btn-primary" onclick="payRent()">🏠 Payer Loyer</button>
+            <button class="btn btn-warning" onclick="getDetails()">🔍 Voir Détails</button>
+            <button class="btn btn-danger"  onclick="terminateLease()">❌ Résilier</button>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:10px;">
+            <input id="deductions" type="number" step="0.001" placeholder="Déductions en ETH (0)" style="margin:0;" />
+            <button class="btn btn-warning" onclick="returnDeposit()" style="white-space:nowrap;">↩️ Restituer Caution</button>
+        </div>
+    </div>
+
+    <!-- DÉTAILS DU CONTRAT -->
+    <div class="card" id="detailsCard" style="display:none;">
+        <h2>📋 Détails du Contrat</h2>
+        <div id="leaseDetails"></div>
+    </div>
+
+    <!-- LOG -->
+    <div class="card">
+        <h2>📜 Journal des Transactions</h2>
+        <div id="log"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
